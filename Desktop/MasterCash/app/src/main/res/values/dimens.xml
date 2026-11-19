@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="screen_padding">16dp</dimen>
+    <dimen name="card_corner_radius">12dp</dimen>
+    <dimen name="button_corner_radius">8dp</dimen>
+    <dimen name="input_corner_radius">8dp</dimen>
+    <dimen name="toast_corner_radius">8dp</dimen>
+    <dimen name="fab_size">56dp</dimen>
+    <dimen name="chart_height">300dp</dimen>
+    <dimen name="chart_small_height">220dp</dimen>
+</resources>
