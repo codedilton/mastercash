@@ -4,7 +4,6 @@ import java.text.NumberFormat;
 import java.util.Locale;
 
 public class FormatUtils {
-
     private static final Locale LOCALE_BR = new Locale("pt", "BR");
 
     public static String formatCurrency(double valor) {
@@ -18,8 +17,7 @@ public class FormatUtils {
         try {
             return Double.parseDouble(limpo);
         } catch (NumberFormatException e) {
-            return 0.0;
-        }
+            return 0.0;     }
     }
 
     public static String formatDateToBr(String isoDate) {
