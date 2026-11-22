@@ -4,6 +4,10 @@ Aplicativo nativo Android para controle de finanças pessoais, desenvolvido em *
 
 ---
 
+![Modelo do Aplicativo](./modelo.png)
+
+---
+
 ## 📱 Funcionalidades
 
 | Funcionalidade | Descrição |
