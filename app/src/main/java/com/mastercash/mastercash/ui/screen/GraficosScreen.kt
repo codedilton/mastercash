@@ -3,48 +3,38 @@ package com.mastercash.mastercash.ui.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.charts.PieChart
 import com.github.mikephil.charting.components.XAxis
-import com.github.mikephil.charting.components.YAxis
-import com.github.mikephil.charting.data.BarData
-import com.github.mikephil.charting.data.BarDataSet
-import com.github.mikephil.charting.data.BarEntry
-import com.github.mikephil.charting.data.Entry
-import com.github.mikephil.charting.data.PieData
-import com.github.mikephil.charting.data.PieDataSet
-import com.github.mikephil.charting.data.PieEntry
+import com.github.mikephil.charting.data.*
 import com.github.mikephil.charting.formatter.ValueFormatter
-import com.github.mikephil.charting.utils.ColorTemplate
 import com.mastercash.mastercash.domain.MovimentacaoDomain
 import com.mastercash.mastercash.ui.viewmodel.MovimentacaoViewModel
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mastercash.mastercash.utils.FormatUtils
 import android.graphics.Color as AndroidColor
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import android.widget.LinearLayout
 import android.view.ViewGroup
-import android.view.View
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GraficosScreen(navController: androidx.compose.navigation.NavHostController, modifier: Modifier = Modifier) {
+fun GraficosScreen(navController: androidx.navigation.NavHostController, modifier: Modifier = Modifier) {
     val viewModel: MovimentacaoViewModel = hiltViewModel()
 
-    val movimentacoes by viewModel.movimentacoes
-    val totalEntradas by viewModel.totalEntradas
-    val totalSaidas by viewModel.totalSaidas
-    val saldo by viewModel.saldo
-    val categoriaMaiorGasto by viewModel.categoriaMaiorGasto
+    val movimentacoes by viewModel.movimentacoes.observeAsState(emptyList())
+    val totalEntradas by viewModel.totalEntradas.observeAsState(0.0)
+    val totalSaidas by viewModel.totalSaidas.observeAsState(0.0)
+    val saldo by viewModel.saldo.observeAsState(0.0)
 
     var periodoGrafico by remember { mutableStateOf("mensal") }
-
-    val context = LocalContext.current
-    val viewFactory = LocalView.current
 
     Scaffold(
         modifier = modifier,
@@ -53,7 +43,7 @@ fun GraficosScreen(navController: androidx.compose.navigation.NavHostController,
                 title = { Text(text = "Gráficos", style = MaterialTheme.typography.headlineMedium) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White
+                    titleContentColor = Color.White
                 ),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -68,24 +58,22 @@ fun GraficosScreen(navController: androidx.compose.navigation.NavHostController,
         }
     ) { innerPadding ->
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            // Cards de resumo
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                ResumoCard("Entradas", FormatUtils.formatCurrency(totalEntradas ?: 0.0), Color(0xFF22C55E))
-                ResumoCard("Saídas", FormatUtils.formatCurrency(totalSaidas ?: 0.0), Color(0xFFEF4444))
-                ResumoCard("Saldo", FormatUtils.formatCurrency(saldo ?: 0.0), if ((saldo ?: 0.0) >= 0) Color(0xFF16A34A) else Color(0xFFDC2626))
+                ResumoCard("Entradas", FormatUtils.formatCurrency(totalEntradas ?: 0.0), Color(0xFF22C55E), modifier = Modifier.weight(1f))
+                ResumoCard("Saídas", FormatUtils.formatCurrency(totalSaidas ?: 0.0), Color(0xFFEF4444), modifier = Modifier.weight(1f))
+                ResumoCard("Saldo", FormatUtils.formatCurrency(saldo ?: 0.0), if ((saldo ?: 0.0) >= 0) Color(0xFF16A34A) else Color(0xFFDC2626), modifier = Modifier.weight(1f))
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Gráfico de Evolução
             Text(
                 text = "Evolução de Entradas e Saídas",
                 style = MaterialTheme.typography.titleMedium,
@@ -95,34 +83,41 @@ fun GraficosScreen(navController: androidx.compose.navigation.NavHostController,
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = androidx.compose.foundation.layout.Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Período:",
+                    text = "Período: ",
                     style = MaterialTheme.typography.bodyMedium
                 )
-                SegmentedButton(
-                    selectedValues = setOf(periodoGrafico),
-                    onValueChange = { selection ->
-                        periodoGrafico = selection.firstOrNull() ?: "mensal"
-                    }
+                Button(
+                    onClick = { periodoGrafico = "semanal" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (periodoGrafico == "semanal") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                    )
                 ) {
-                    SegmentedButtonOption(value = "semanal", label = { Text(text = "Semanal") })
-                    SegmentedButtonOption(value = "mensal", label = { Text(text = "Mensal") })
+                    Text("Semanal")
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Button(
+                    onClick = { periodoGrafico = "mensal" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (periodoGrafico == "mensal") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant
+                    )
+                ) {
+                    Text("Mensal")
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
 
             AndroidChartView(
-                movimentacoes = movimentacoes ?: emptyList(),
+                movimentacoes = movimentacoes,
                 periodo = periodoGrafico,
-                modifier = Modifier.fillMaxWidth().height(300.dp)
+                modifier = Modifier.fillMaxWidth().height(250.dp)
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
-            // Gráficos de rosca por categoria
             Text(
                 text = "Distribuição por Categoria",
                 style = MaterialTheme.typography.titleMedium,
@@ -135,15 +130,15 @@ fun GraficosScreen(navController: androidx.compose.navigation.NavHostController,
             ) {
                 AndroidPieChartView(
                     title = "Entradas",
-                    movimentacoes = movimentacoes ?: emptyList(),
+                    movimentacoes = movimentacoes,
                     tipo = "entrada",
-                    modifier = Modifier.weight(1f).height(260.dp)
+                    modifier = Modifier.weight(1f).height(220.dp)
                 )
                 AndroidPieChartView(
                     title = "Saídas",
-                    movimentacoes = movimentacoes ?: emptyList(),
+                    movimentacoes = movimentacoes,
                     tipo = "saida",
-                    modifier = Modifier.weight(1f).height(260.dp)
+                    modifier = Modifier.weight(1f).height(220.dp)
                 )
             }
         }
@@ -151,27 +146,27 @@ fun GraficosScreen(navController: androidx.compose.navigation.NavHostController,
 }
 
 @Composable
-private fun ResumoCard(titulo: String, valor: String, cor: Color) {
+private fun ResumoCard(titulo: String, valor: String, cor: Color, modifier: Modifier = Modifier) {
     Card(
-        modifier = Modifier.weight(1f),
-        elevation = 2.dp,
-        containerColor = MaterialTheme.colorScheme.surface
+        modifier = modifier,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp),
-            horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
+            modifier = Modifier.padding(12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
                 text = titulo,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = valor,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.bodyMedium,
                 color = cor,
-                fontWeight = androidx.compose.ui.text.FontWeight.Bold
+                fontWeight = FontWeight.Bold
             )
         }
     }
@@ -183,7 +178,6 @@ fun AndroidChartView(
     periodo: String,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     AndroidView(
         modifier = modifier,
         factory = { context ->
@@ -256,7 +250,6 @@ fun AndroidPieChartView(
     tipo: String,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
     Column(
         modifier = modifier
     ) {
@@ -264,10 +257,10 @@ fun AndroidPieChartView(
             text = title,
             style = MaterialTheme.typography.titleSmall,
             color = if (tipo == "entrada") Color(0xFF22C55E) else Color(0xFFEF4444),
-            modifier = Modifier.padding(bottom = 8.dp)
+            modifier = Modifier.padding(bottom = 4.dp)
         )
         AndroidView(
-            modifier = Modifier.fillMaxWidth().height(200.dp),
+            modifier = Modifier.fillMaxWidth().height(180.dp),
             factory = { context ->
                 PieChart(context).apply {
                     layoutParams = ViewGroup.LayoutParams(
@@ -321,14 +314,6 @@ fun AndroidPieChartView(
                 chart.invalidate()
             }
         )
-        if (movimentacoes.none { it.tipo == tipo }) {
-            Text(
-                text = if (tipo == "entrada") "Sem entradas" else "Sem saídas",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier.align(androidx.compose.ui.Alignment.CenterHorizontally)
-            )
-        }
     }
 }
 
@@ -343,17 +328,18 @@ private fun agruparPorPeriodo(movimentacoes: List<MovimentacaoDomain>, periodo: 
         val label: String
 
         if (periodo == "semanal") {
-            // Simplificado: usar dia da semana
             val partes = m.data.split("-")
-            val dia = partes[2].toInt()
-            val mes = partes[1].toInt()
-            val ano = partes[0].toInt()
+            val dia = partes.getOrNull(2)?.toInt() ?: 1
+            val mes = partes.getOrNull(1)?.toInt() ?: 1
+            val ano = partes.getOrNull(0)?.toInt() ?: 2024
             key = "$ano-${String.format("%02d", mes)}"
             label = "${String.format("%02d", dia)}/${String.format("%02d", mes)}"
         } else {
             val partes = m.data.split("-")
-            key = "${partes[0]}-${partes[1]}"
-            label = "${partes[1]}/${partes[0]}"
+            val ano = partes.getOrNull(0) ?: "2024"
+            val mes = partes.getOrNull(1) ?: "01"
+            key = "$ano-$mes"
+            label = "$mes/$ano"
         }
 
         if (!grupos.containsKey(key)) {
