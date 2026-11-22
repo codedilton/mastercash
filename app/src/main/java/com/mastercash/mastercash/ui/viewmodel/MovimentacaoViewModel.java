@@ -3,7 +3,7 @@ package com.mastercash.mastercash.ui.viewmodel;
 import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import com.google.dagger.hilt.android.lifecycle.HiltViewModel;
+import dagger.hilt.android.lifecycle.HiltViewModel;
 import com.mastercash.mastercash.data.repository.MovimentacaoRepository;
 import com.mastercash.mastercash.domain.MovimentacaoDomain;
 import com.mastercash.mastercash.domain.CategoriaDomain;

@@ -41,6 +41,6 @@ public interface MovimentacaoDao {
     @Query("SELECT SUM(valor) FROM movimentacoes WHERE tipo = 'saida'")
     Double sumSaidas();
 
-    @Query("SELECT categoria, SUM(valor) as total FROM movimentacoes WHERE tipo = 'saida' GROUP BY categoria ORDER BY total DESC LIMIT 1")
+    @Query("SELECT categoria FROM movimentacoes WHERE tipo = 'saida' GROUP BY categoria ORDER BY SUM(valor) DESC LIMIT 1")
     String getCategoriaMaiorGasto();
 }

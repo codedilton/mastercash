@@ -2,9 +2,8 @@ package com.mastercash.mastercash.data.repository;
 
 import android.app.Application;
 import android.os.AsyncTask;
-import com.google.dagger.hilt.android.qualifiers.ApplicationContext;
-import com.google.dagger.hilt.android.installIn;
-import com.google.dagger.hilt.android.components.ApplicationComponent;
+import dagger.hilt.android.qualifiers.ApplicationContext;
+
 import com.mastercash.mastercash.data.MovimentacaoDao;
 import com.mastercash.mastercash.data.CategoriaDao;
 import com.mastercash.mastercash.data.Movimentacao;
@@ -23,8 +22,7 @@ public class MovimentacaoRepository {
     private final CategoriaDao categoriaDao;
 
     @Inject
-    public MovimentacaoRepository(@ApplicationContext Application application,
-                                  MovimentacaoDao movimentacaoDao,
+    public MovimentacaoRepository(MovimentacaoDao movimentacaoDao,
                                   CategoriaDao categoriaDao) {
         this.movimentacaoDao = movimentacaoDao;
         this.categoriaDao = categoriaDao;

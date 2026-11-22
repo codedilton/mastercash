@@ -21,4 +21,40 @@ public class FormatUtils {
             return 0.0;
         }
     }
+
+    public static String formatDateToBr(String isoDate) {
+        if (isoDate != null && isoDate.matches("\\d{4}-\\d{2}-\\d{2}")) {
+            String[] parts = isoDate.split("-");
+            if (parts.length == 3) {
+                return parts[2] + "/" + parts[1] + "/" + parts[0];
+            }
+        }
+        return isoDate != null ? isoDate : "";
+    }
+
+    public static String parseDateToIso(String brDate) {
+        if (brDate != null && brDate.matches("\\d{2}/\\d{2}/\\d{4}")) {
+            String[] parts = brDate.split("/");
+            if (parts.length == 3) {
+                return parts[2] + "-" + parts[1] + "-" + parts[0];
+            }
+        }
+        return brDate != null ? brDate : "";
+    }
+
+    public static String applyDateMask(String input) {
+        if (input == null) return "";
+        String digits = input.replaceAll("\\D", "");
+        if (digits.length() > 8) {
+            digits = digits.substring(0, 8);
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < digits.length(); i++) {
+            if (i == 2 || i == 4) {
+                sb.append('/');
+            }
+            sb.append(digits.charAt(i));
+        }
+        return sb.toString();
+    }
 }

@@ -3,39 +3,44 @@ package com.mastercash.mastercash.ui.screen
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.TextInputType
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.mastercash.mastercash.domain.MovimentacaoDomain
 import com.mastercash.mastercash.ui.viewmodel.MovimentacaoViewModel
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mastercash.mastercash.utils.FormatUtils
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FormScreen(
-    navController: androidx.compose.navigation.NavHostController,
+    navController: androidx.navigation.NavHostController,
     editId: Int = -1
 ) {
     val viewModel: MovimentacaoViewModel = hiltViewModel()
+
+    val dateFormatBr = SimpleDateFormat("dd/MM/yyyy", Locale("pt", "BR"))
+    val todayBr = dateFormatBr.format(Date())
 
     var descricao by remember { mutableStateOf("") }
     var valor by remember { mutableStateOf("") }
     var tipo by remember { mutableStateOf("entrada") }
     var categoria by remember { mutableStateOf("Alimentação") }
-    var data by remember { mutableStateOf("") }
+    var data by remember { mutableStateOf(todayBr) }
     var novaCategoria by remember { mutableStateOf("") }
     var showingNovaCategoria by remember { mutableStateOf(false) }
 
-    val categorias by viewModel.categorias
-    val categoriaList = categorias ?: emptyList()
-
-    LaunchedEffect(editId) {
-        if (editId != -1) {
-            val movimentacoes = viewModel as MovimentacaoViewModel
-            // Note: in a real app, we'd observe the specific item; here we simplify
-        }
-    }
+    val categorias by viewModel.categorias.observeAsState(emptyList())
+    val categoriaList = categorias
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
@@ -49,12 +54,12 @@ fun FormScreen(
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = Color.White
+                    titleContentColor = Color.White
                 ),
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
-                            imageVector = Icons.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Voltar",
                             tint = Color.White
                         )
@@ -89,92 +94,82 @@ fun FormScreen(
                 onValueChange = { valor = it },
                 label = { Text("Valor (R$)") },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(
-                    keyboardType = TextInputType.Number,
-                    decimalSeparator = ","
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number
                 ),
                 singleLine = true
             )
 
             Row(
                 modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                verticalAlignment = androidx.compose.foundation.layout.Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Text(
                     text = "Tipo:",
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.width(60.dp)
                 )
-                SegmentedButton(
-                    selectedValues = setOf(tipo),
-                    onValueChange = { selection -> tipo = selection.firstOrNull() ?: "entrada" },
-                    containerColor = MaterialTheme.colorScheme.surface
+                Button(
+                    onClick = { tipo = "entrada" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (tipo == "entrada") MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (tipo == "entrada") Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier.weight(1f)
                 ) {
-                    SegmentedButtonOption(
-                        value = "entrada",
-                        label = { Text(text = "Entrada") }
-                    )
-                    SegmentedButtonOption(
-                        value = "saida",
-                        label = { Text(text = "Saída") }
-                    )
+                    Text("Entrada")
+                }
+                Button(
+                    onClick = { tipo = "saida" },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (tipo == "saida") Color(0xFFEF4444) else MaterialTheme.colorScheme.surfaceVariant,
+                        contentColor = if (tipo == "saida") Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Saída")
                 }
             }
 
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
-                verticalAlignment = androidx.compose.foundation.layout.Alignment.CenterVertically
-            ) {
-                Text(
-                    text = "Categoria:",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.width(80.dp)
-                )
+            // Dropdown / Categoria selection list
+            var categoryExpanded by remember { mutableStateOf(false) }
+            Box(modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)) {
+                OutlinedButton(onClick = { categoryExpanded = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text(text = "Categoria: $categoria")
+                }
                 DropdownMenu(
-                    expanded = showingNovaCategoria,
-                    onDismissRequest = { showingNovaCategoria = false }
+                    expanded = categoryExpanded,
+                    onDismissRequest = { categoryExpanded = false }
                 ) {
                     categoriaList.forEach { cat ->
                         DropdownMenuItem(
+                            text = { Text(text = cat.nome) },
                             onClick = {
                                 categoria = cat.nome
-                                showingNovaCategoria = false
+                                categoryExpanded = false
                             }
-                        ) {
-                            Text(text = cat.nome)
-                        }
+                        )
                     }
-                    Divider()
+                    HorizontalDivider()
                     DropdownMenuItem(
+                        text = { Text(text = "Nova categoria...") },
                         onClick = {
+                            categoryExpanded = false
                             showingNovaCategoria = true
                             novaCategoria = ""
                         }
-                    ) {
-                        Text(text = "Nova categoria...")
-                    }
-                }
-
-                TextButton(
-                    onClick = { showingNovaCategoria = !showingNovaCategoria }
-                ) {
-                    Text(
-                        text = categoria,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.primary
                     )
                 }
             }
 
             OutlinedTextField(
                 value = data,
-                onValueChange = { data = it },
-                label = { Text("Data (YYYY-MM-DD)") },
+                onValueChange = { data = FormatUtils.applyDateMask(it) },
+                label = { Text("Data (DD/MM/AAAA)") },
                 modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp),
-                keyboardOptions = androidx.compose.ui.text.input.KeyboardOptions(
-                    keyboardType = TextInputType.Date
-                ),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
             Row(
@@ -188,7 +183,8 @@ fun FormScreen(
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.onSurface
-                    )
+                    ),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(text = "Cancelar")
                 }
@@ -196,17 +192,20 @@ fun FormScreen(
                 Button(
                     onClick = {
                         try {
-                            val v = valor.replace(",", ".").toDouble()
-                            viewModel.addMovimentacao(descricao, v, tipo, categoria, data)
+                            val v = FormatUtils.parseCurrency(valor)
+                            val dataInput = if (data.isBlank()) todayBr else data
+                            val dataIso = FormatUtils.parseDateToIso(dataInput)
+                            viewModel.addMovimentacao(descricao, v, tipo, categoria, dataIso)
                             navController.popBackStack()
-                        } catch (e: NumberFormatException) {
+                        } catch (_: NumberFormatException) {
                             viewModel.showToast("Valor inválido")
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = Color.White
-                    )
+                    ),
+                    modifier = Modifier.weight(1f)
                 ) {
                     Text(text = "Salvar")
                 }
@@ -216,8 +215,8 @@ fun FormScreen(
             if (showingNovaCategoria) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                    elevation = 2.dp,
-                    containerColor = MaterialTheme.colorScheme.surface
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
                 ) {
                     Column(
                         modifier = Modifier.padding(16.dp)
@@ -243,6 +242,7 @@ fun FormScreen(
                             ) {
                                 Text(text = "Cancelar")
                             }
+                            Spacer(modifier = Modifier.width(8.dp))
                             Button(
                                 onClick = {
                                     if (novaCategoria.isNotBlank()) {

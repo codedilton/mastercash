@@ -2,9 +2,9 @@ package com.mastercash.mastercash.data.db;
 
 import android.content.Context;
 import androidx.room.Room;
-import com.google.dagger.hilt.android.qualifiers.ApplicationContext;
-import com.google.dagger.hilt.android.installIn;
-import com.google.dagger.hilt.android.components.ApplicationComponent;
+import dagger.hilt.android.qualifiers.ApplicationContext;
+import dagger.hilt.InstallIn;
+import dagger.hilt.components.SingletonComponent;
 import com.mastercash.mastercash.data.AppDatabase;
 import com.mastercash.mastercash.data.MovimentacaoDao;
 import com.mastercash.mastercash.data.CategoriaDao;
@@ -13,7 +13,7 @@ import dagger.Module;
 import dagger.Provides;
 
 @Module
-@InstallIn(ApplicationComponent.class)
+@InstallIn(SingletonComponent.class)
 public class DatabaseModule {
 
     @Singleton
@@ -21,6 +21,7 @@ public class DatabaseModule {
     public AppDatabase provideDatabase(@ApplicationContext Context context) {
         return Room.databaseBuilder(context, AppDatabase.class, "mastercash_db")
                 .fallbackToDestructiveMigration()
+                .allowMainThreadQueries()
                 .build();
     }
 
